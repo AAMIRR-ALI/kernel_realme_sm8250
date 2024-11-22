@@ -24,7 +24,8 @@
 #include "governor.h"
 #include "governor_memlat.h"
 
-#include <trace/events/power.h>
+#define CREATE_TRACE_POINTS
+#include "governor_memlat_trace.h"
 
 struct memlat_node {
 	unsigned int ratio_ceil;
@@ -550,6 +551,7 @@ out:
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(register_compute);
 
 int register_memlat(struct device *dev, struct memlat_hwmon *hw)
 {
@@ -580,6 +582,7 @@ out:
 
 	return ret;
 }
+EXPORT_SYMBOL_GPL(register_memlat);
 
 MODULE_DESCRIPTION("HW monitor based dev DDR bandwidth voting driver");
 MODULE_LICENSE("GPL v2");
