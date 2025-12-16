@@ -29,18 +29,15 @@ jobs:
         echo "KBUILD_BUILD_USER=CI" >> $GITHUB_ENV
         echo "KBUILD_BUILD_HOST=GitHub" >> $GITHUB_ENV
         
-    - name: Fix clang permissions
+    - name: Setup AOSP Clang (isolated)
       run: |
-        mkdir clang
-        chmod -R u+rwX clang
-        
-    - name: Download AOSP Clang
-      run: |
+        mkdir -p $HOME/toolchains
+        cd $HOME/toolchains
         git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 clang --depth=1
 
     - name: Export toolchain
       run: |
-        echo "PATH=$PWD/clang/clang/bin:$PATH" >> $GITHUB_ENV
+        echo "$HOME/toolchains/clang/clang/bin" >> $GITHUB_PATH
         echo "CC=clang" >> $GITHUB_ENV
         echo "LD=ld.lld" >> $GITHUB_ENV
 
