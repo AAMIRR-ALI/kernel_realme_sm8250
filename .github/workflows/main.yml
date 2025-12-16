@@ -28,7 +28,12 @@ jobs:
         echo "SUBARCH=arm64" >> $GITHUB_ENV
         echo "KBUILD_BUILD_USER=CI" >> $GITHUB_ENV
         echo "KBUILD_BUILD_HOST=GitHub" >> $GITHUB_ENV
-
+        
+    - name: Fix clang permissions
+      run: |
+        mkdir clang
+        chmod -R u+rwX clang
+        
     - name: Download AOSP Clang
       run: |
         git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 clang --depth=1
