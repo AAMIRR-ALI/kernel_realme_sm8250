@@ -1,0 +1,65 @@
+name: Bladerunner Kernel CI
+
+on:
+  push:
+    branches: [ YazzdaN ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout kernel source
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          bc bison flex libssl-dev \
+          build-essential \
+          git curl zip unzip \
+          python3 ccache
+
+    - name: Setup build environment
+      run: |
+        echo "ARCH=arm64" >> $GITHUB_ENV
+        echo "SUBARCH=arm64" >> $GITHUB_ENV
+        echo "KBUILD_BUILD_USER=CI" >> $GITHUB_ENV
+        echo "KBUILD_BUILD_HOST=GitHub" >> $GITHUB_ENV
+
+    - name: Download AOSP Clang
+      run: |
+        git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 clang --depth=1
+
+    - name: Export toolchain
+      run: |
+        echo "PATH=$PWD/clang/clang/bin:$PATH" >> $GITHUB_ENV
+        echo "CC=clang" >> $GITHUB_ENV
+        echo "LD=ld.lld" >> $GITHUB_ENV
+
+    - name: Build kernel
+      run: |
+        make O=out arch/arm64/configs/vendor/sm8250_defconfig
+        make -j$(nproc) O=out \
+          LLVM=1 \
+          LLVM_IAS=1
+
+    - name: Prepare AnyKernel3
+      run: |
+        cp out/arch/arm64/boot/Image* AnyKernel3/
+        sed -i "s/kernel.string=.*/kernel.string=Bladerunner Kernel CI/" AnyKernel3/anykernel.sh
+
+    - name: Create flashable zip
+      run: |
+        cd AnyKernel3
+        ZIP_NAME=Bladerunner-Kernel-$(date +%Y%m%d).zip
+        zip -r9 ../$ZIP_NAME * -x "*.git*" "*.md"
+        echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+
+    - name: Upload flashable zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: Bladerunner-Kernel
+        path: ${{ env.ZIP_NAME }}
